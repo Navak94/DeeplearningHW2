@@ -1,10 +1,10 @@
 # Deep learning Homework 2
 
-This is the repository that we'll be using for our **Comparison of Logistic Regression vs. Linear Regression (or another method).**
+This is the repository just pertaining to homework 2
 
 ## Welcome!
 
-Hello everyone! This is our **Group Project!** 
+ayyyy lmao!  **homreork time!** 
 
 ## Getting Started
 
