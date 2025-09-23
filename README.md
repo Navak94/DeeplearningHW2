@@ -18,7 +18,7 @@ Send me your GitHub username in our WhatsApp conversation, and I'll add you to t
 
 ### Step 3: Install Git Bash  
 Download and install **Git Bash** from [here](https://git-scm.com/downloads).  
-Create a folder on your **desktop** named `GIT`.
+Create a folder on your **desktop** named `git`.
 
 ### Step 4: Clone the Repository  
 1. Go to the repository on GitHub.  
