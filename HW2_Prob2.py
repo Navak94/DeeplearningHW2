@@ -130,6 +130,8 @@ def train_softmax_classifier(train_images, train_labels, val_images, val_labels,
 
 if __name__ == "__main__":
     # Load data
+    np.random.seed(541) 
+    
     training_images = np.load("fashion_mnist_train_images.npy") / 255.0 - 0.5
     training_labels = to_one_hot(np.load("fashion_mnist_train_labels.npy"))
     testing_images = np.load("fashion_mnist_test_images.npy") / 255.0 - 0.5
@@ -141,9 +143,9 @@ if __name__ == "__main__":
 
     # List hyperparameters to try
     # BEGIN YOUR CODE HERE (~2-3 lines)
-    learn_rs =[0.001,0.0001,0.00001, 0.000001]
+    learn_rs =[0.1,0.01,0.001]
     batch_szs = [8,16,32,64,128]
-    epochs_tests = [5,10,15,20,25]
+    epochs_tests = [100]
     # END YOUR CODE HERE
 
     # Initialize varjables to keep track of best hyperparameters
@@ -160,34 +162,38 @@ if __name__ == "__main__":
     # Train model
     # BEGIN YOUR CODE HERE (~7-10 lines)
 
-    # trying to do random search! 
-    test_number = 1000 # change as needed for how many attepts at random configurations
-    for x in range(1,test_number):
-
-        # pick a random item from each
-        lnr = np.random.choice(learn_rs)
-        bts = np.random.choice(batch_szs)
-        epchs = np.random.choice(epochs_tests)
-        
-
-        w, bias, loss, accuracy = train_softmax_classifier(x_train, y_train, x_val, y_val,learning_rate=lnr, batch_size=bts, nepochs=epchs)
-
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
-            best_lr =lnr 
-            best_bs = bts
-            best_epoch = epchs
-            best_W = w
-            best_b = bias
-            print("best accuracy!!  " , best_accuracy , "  Best learning rate ", best_lr , "Best Batch size! " , best_bs , "best epoch! ", best_epoch)
-    print("tried ", test_number, " random iterations, finished!")                    
-
+    # Train model (grid over all 100 unique combos)
+    run_idx = 0
+    total = len(learn_rs) * len(batch_szs) * len(epochs_tests)
+    
+    for lnr in learn_rs:
+        for bts in batch_szs:
+            for epchs in epochs_tests:
+                run_idx += 1
+                print(f"Starting combo {run_idx}/{total}: lr={lnr}, batch_size={bts}, epochs={epchs}", flush=True)
+                
+                w, bias, loss, accuracy = train_softmax_classifier(
+                    x_train, y_train, x_val, y_val,
+                    learning_rate=lnr, batch_size=bts, nepochs=epchs
+                )
+                
+                if accuracy > best_accuracy:
+                    best_accuracy = accuracy
+                    best_lr = lnr
+                    best_bs = bts
+                    best_epoch = epchs
+                    best_W = w
+                    best_b = bias
+                    print(f" -> new best acc={best_accuracy:.4f}", flush=True)
+                    
+    print("Tested all unique hyperparameter combinations.")
+    
     # END YOUR CODE HERE
 
     # Retrain model on full training set with best hyperparameters and evaluate on test set
     # BEGIN YOUR CODE HERE (~1 line)
     final_W, final_b, loss, acc = train_softmax_classifier(training_images, training_labels, testing_images, testing_labels,
-                                   learning_rate=best_lr, batch_size=best_bs, nepochs=10, wandb_init=False)
+                                   learning_rate=best_lr, batch_size=best_bs, nepochs=best_epoch)
     # END YOUR CODE HERE
 
     # showWeights(lr[:,:])
