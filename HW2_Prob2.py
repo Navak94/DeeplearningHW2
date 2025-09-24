@@ -22,7 +22,7 @@ def softmax(z):
     return proba
 
 
-def cross_entropy_loss(W, b, images, labels):
+def cross_entropy_loss(W, b, images, labels, alpha):
     """Compute cross-entropy loss for predictions; returns scalar loss."""
     # BEGIN YOUR CODE HERE (~2-6 lines)
     logits =  images@W + b
@@ -123,7 +123,7 @@ def train_softmax_classifier(train_images, train_labels, val_images, val_labels,
             # END YOUR CODE HERE
         # what do you need to compute at the end of each epoch?
         # BEGIN YOUR CODE HERE (~3 lines)
-        cost = cross_entropy_loss(W, b, val_images, val_labels)
+        cost = cross_entropy_loss(W, b, val_images, val_labels, alpha)
         acc  = compute_accuracy(W, b, val_images, val_labels)
         # END YOUR CODE HERE
     return W, b, cost, acc
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # List hyperparameters to try
     # BEGIN YOUR CODE HERE (~2-3 lines)
     learn_rs =[0.1,0.01,0.001]
-    batch_szs = [8,16,32,64,128]
+    batch_szs = [8,16,32,64]
     alpha_values = [0.0, 0.001, 0.01]
     # END YOUR CODE HERE
 
@@ -189,22 +189,38 @@ if __name__ == "__main__":
                     best_b = bias
                     print(f" -> new best acc={best_accuracy:.4f}", flush=True)
                     
-    print("Tested all unique hyperparameter combinations.")
+print("Tested all unique hyperparameter combinations.")
     
     # END YOUR CODE HERE
 
-    # Retrain model on full training set with best hyperparameters and evaluate on test set
-    # BEGIN YOUR CODE HERE (~1 line)
-    final_W, final_b, loss, acc = train_softmax_classifier(
-        training_images, training_labels, testing_images, testing_labels,
-        learning_rate=best_lr, batch_size=best_bs, nepochs=100, alpha=best_alpha)
-    
-    test_loss = cross_entropy_loss(final_W, final_b, testing_images, testing_labels, best_alpha)
-    test_accuracy = compute_accuracy(final_W, final_b, testing_images, testing_labels)
+# Retrain model on full training set with best hyperparameters and evaluate on test set
+# BEGIN YOUR CODE HERE (~1 line)
+final_W, final_b, loss, acc = train_softmax_classifier(
+    training_images, training_labels, testing_images, testing_labels,
+    learning_rate=best_lr, batch_size=best_bs, nepochs=100, alpha=best_alpha)
 
-    
-    # END YOUR CODE HERE
+test_loss = cross_entropy_loss(final_W, final_b, testing_images, testing_labels, best_alpha)
+test_accuracy = compute_accuracy(final_W, final_b, testing_images, testing_labels)
 
-    # showWeights(lr[:,:])
+np.savez('hw2_p2_results.npz', 
+                        final_W=final_W, final_b=final_b, best_W=best_W, best_b=best_b,
+                        best_lr=best_lr, best_bs=best_bs, best_alpha=best_alpha,
+                        test_loss=test_loss, test_accuracy=test_accuracy,
+                        val_accuracy=best_accuracy)
     
-    
+loaded = np.load('hw2_p2_results.npz')  
+
+
+print("Best Hyperparameters Found:")
+print(" Learning Rate: {best_lr}")
+print(" Batch Size: {best_bs}")
+print(" Regularization (alpha): {best_alpha}")
+
+print("Test Set Performance:")
+print(" Cross-Entropy Loss (unregularized): {test_loss:.4f}")
+print(" Accuracy: {test_accuracy:.4f} ({test_accuracy*100:.2f}%)")
+
+# END YOUR CODE HERE
+
+# showWeights(lr[:,:])
+
