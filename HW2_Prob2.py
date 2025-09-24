@@ -176,7 +176,7 @@ if __name__ == "__main__":
     batch_sizes_list = [8,16,32,64]
 
     learning_rates_list =[0.1,0.01,0.001]
-    
+
     alpha_values = [0.0, 0.001, 0.01]
     # END YOUR CODE HERE
 
@@ -218,7 +218,7 @@ if __name__ == "__main__":
                     best_alpha = alpha
                     best_epochs_used = epochs_used
                     W_best = w
-                    best_b = bias
+                    b_best = bias
                     print(f" -> new best acc={best_accuracy:.4f}", flush=True)
                     
 print("Tested all unique hyperparameter combinations.")
