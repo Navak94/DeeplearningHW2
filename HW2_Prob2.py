@@ -198,7 +198,7 @@ if __name__ == "__main__":
                 
                 w, bias, loss, accuracy, epochs_used = train_softmax_classifier(
                     x_train, y_train, x_val, y_val,
-                    learning_rate=lnr, batch_size=bts, nepochs=300, alpha=alpha
+                    learning_rate=lnr, batch_size=bts, nepochs=1000, alpha=alpha
                 )
                 
                 if accuracy > best_accuracy:
@@ -219,7 +219,7 @@ print("Tested all unique hyperparameter combinations.")
 # BEGIN YOUR CODE HERE (~1 line)
 final_W, final_b, loss, acc, final_epochs = train_softmax_classifier(
     training_images, training_labels, testing_images, testing_labels,
-    learning_rate=best_lr, batch_size=best_bs, nepochs=300, alpha=best_alpha)
+    learning_rate=best_lr, batch_size=best_bs, nepochs=1000, alpha=best_alpha)
 
 test_loss = cross_entropy_loss(final_W, final_b, testing_images, testing_labels, best_alpha)
 test_accuracy = compute_accuracy(final_W, final_b, testing_images, testing_labels)
