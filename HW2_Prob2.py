@@ -31,10 +31,15 @@ def cross_entropy_loss(W, b, images, labels, alpha):
     class_index = np.argmax(labels,axis=1)
     prob_true = proba[np.arange(images.shape[0]), class_index]
 
-    keep_above_zero = 1e-6
 
+    if np.any(prob_true == 0):
+        prob_true = 1e-6
+        loss = -np.mean(np.log(prob_true))
+    
+    else:
+        loss = -np.mean(np.log(prob_true))
 
-    loss = -np.mean(np.log(prob_true+keep_above_zero))
+    
     loss += 0.5 * alpha * np.sum(W ** 2) # here L2 reg on the weights only
 
 
@@ -118,8 +123,9 @@ def train_softmax_classifier(train_images, train_labels, val_images, val_labels,
             s = batch * batch_size
             e = s + batch_size
 
-            xb = train_images[s:e]
             yb = train_labels[s:e]
+            xb = train_images[s:e]
+
 
 
             dW, db = compute_gradient(W, b, xb, yb, alpha)
@@ -167,19 +173,22 @@ if __name__ == "__main__":
 
     # List hyperparameters to try
     # BEGIN YOUR CODE HERE (~2-3 lines)
-    learn_rs =[0.1,0.01,0.001]
-    batch_szs = [8,16,32,64]
+    batch_sizes_list = [8,16,32,64]
+
+    learning_rates_list =[0.1,0.01,0.001]
+    
     alpha_values = [0.0, 0.001, 0.01]
     # END YOUR CODE HERE
 
     # Initialize varjables to keep track of best hyperparameters
     # BEGIN YOUR CODE HERE (~3 lines)
-    best_accuracy = -1.0 
-    best_alpha = 0
-    best_lr = 0
+    best_learning_rate = 0
     best_bs = 0
-    best_W = 0
-    best_b = 0
+    best_accuracy = -1.0 
+    W_best = 0
+    b_best = 0
+    best_alpha = 0
+
 
     # END YOUR CODE HERE
 
@@ -188,11 +197,12 @@ if __name__ == "__main__":
 
     # Train model (grid over all unique combos)
     run_idx = 0
-    total = len(learn_rs) * len(batch_szs) * len(alpha_values)
+    total = len(learning_rates_list) * len(batch_sizes_list) * len(alpha_values)
     
-    for lnr in learn_rs:
-        for bts in batch_szs:
-            for alpha in alpha_values:
+    for alpha in alpha_values:
+        for bts in batch_sizes_list:
+            for lnr in learning_rates_list:
+
                 run_idx += 1
                 print(f"Starting combo {run_idx}/{total}: lr={lnr}, batch_size={bts}, alpha={alpha}", flush=True)
                 
@@ -203,11 +213,11 @@ if __name__ == "__main__":
                 
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
-                    best_lr = lnr
+                    best_learning_rate = lnr
                     best_bs = bts
                     best_alpha = alpha
                     best_epochs_used = epochs_used
-                    best_W = w
+                    W_best = w
                     best_b = bias
                     print(f" -> new best acc={best_accuracy:.4f}", flush=True)
                     
@@ -219,14 +229,14 @@ print("Tested all unique hyperparameter combinations.")
 # BEGIN YOUR CODE HERE (~1 line)
 final_W, final_b, loss, acc, final_epochs = train_softmax_classifier(
     training_images, training_labels, testing_images, testing_labels,
-    learning_rate=best_lr, batch_size=best_bs, nepochs=1000, alpha=best_alpha)
+    learning_rate=best_learning_rate, batch_size=best_bs, nepochs=1000, alpha=best_alpha)
 
 test_loss = cross_entropy_loss(final_W, final_b, testing_images, testing_labels, best_alpha)
 test_accuracy = compute_accuracy(final_W, final_b, testing_images, testing_labels)
 
 np.savez('hw2_p2_results.npz', 
-        final_W=final_W, final_b=final_b, best_W=best_W, best_b=best_b,
-        best_lr=best_lr, best_bs=best_bs, best_alpha=best_alpha,
+        final_W=final_W, final_b=final_b, W_best=W_best, best_b=best_b,
+        best_learning_rate=best_learning_rate, best_bs=best_bs, best_alpha=best_alpha,
         test_loss=test_loss, test_accuracy=test_accuracy,
         val_accuracy=best_accuracy, best_epochs_used=best_epochs_used)
     
@@ -234,7 +244,7 @@ loaded = np.load('hw2_p2_results.npz')
 
 
 print("Best Hyperparameters Found:")
-print(f" Learning Rate: {best_lr}")
+print(f" Learning Rate: {best_learning_rate}")
 print(f" Batch Size: {best_bs}")
 print(f" Regularization (alpha): {best_alpha}")
 print(f" Best Epoch: {best_epochs_used}")
