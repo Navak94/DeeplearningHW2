@@ -35,6 +35,7 @@ def cross_entropy_loss(W, b, images, labels):
 
 
     loss = -np.mean(np.log(prob_true+keep_above_zero))
+    loss += 0.5 * alpha * np.sum(W ** 2) # here L2 reg on the weights only
 
 
     # END YOUR CODE HERE
@@ -43,7 +44,7 @@ def cross_entropy_loss(W, b, images, labels):
 
     return loss
 
-def compute_gradient(W, b, images, labels):
+def compute_gradient(W, b, images, labels, alpha):
     """Compute gradients w.r.t. weights and bias; returns (dW, db)."""
     # BEGIN YOUR CODE HERE (~4-7 lines)
     logits =  images@W + b
@@ -53,6 +54,8 @@ def compute_gradient(W, b, images, labels):
     Delta = (proba - labels)/B
 
     dW = images.T @ Delta
+    dW += alpha * W # this applies L2 in the gradient
+    
     db = Delta.sum(axis=0)
 
     # END YOUR CODE HERE
@@ -82,7 +85,7 @@ def show_weights(W):
     plt.show()
 
 def train_softmax_classifier(train_images, train_labels, val_images, val_labels,
-                             learning_rate=1e-5, batch_size=16, nepochs=100):
+                             learning_rate=1e-5, batch_size=16, nepochs=100, alpha=0.0):
     """Train softmax classifier; returns (W, b, loss, accuracy)."""
     num_batches = train_images.shape[0] // batch_size
     n_features = train_images.shape[1]
@@ -111,8 +114,8 @@ def train_softmax_classifier(train_images, train_labels, val_images, val_labels,
             yb = train_labels[s:e]
 
 
-            dW, db = compute_gradient(W, b, xb, yb)
-
+            dW, db = compute_gradient(W, b, xb, yb, alpha)
+            
             W -= learning_rate * dW
             b -= learning_rate * db
 
@@ -145,13 +148,13 @@ if __name__ == "__main__":
     # BEGIN YOUR CODE HERE (~2-3 lines)
     learn_rs =[0.1,0.01,0.001]
     batch_szs = [8,16,32,64,128]
-    epochs_tests = [100]
+    alpha_values = [0.0, 0.001, 0.01]
     # END YOUR CODE HERE
 
     # Initialize varjables to keep track of best hyperparameters
     # BEGIN YOUR CODE HERE (~3 lines)
     best_accuracy = -1.0 
-    best_epoch = 0
+    best_alpha = 0
     best_lr = 0
     best_bs = 0
     best_W = 0
@@ -162,26 +165,26 @@ if __name__ == "__main__":
     # Train model
     # BEGIN YOUR CODE HERE (~7-10 lines)
 
-    # Train model (grid over all 100 unique combos)
+    # Train model (grid over all unique combos)
     run_idx = 0
-    total = len(learn_rs) * len(batch_szs) * len(epochs_tests)
+    total = len(learn_rs) * len(batch_szs) * len(alpha_values)
     
     for lnr in learn_rs:
         for bts in batch_szs:
-            for epchs in epochs_tests:
+            for alpha in alpha_values:
                 run_idx += 1
-                print(f"Starting combo {run_idx}/{total}: lr={lnr}, batch_size={bts}, epochs={epchs}", flush=True)
+                print(f"Starting combo {run_idx}/{total}: lr={lnr}, batch_size={bts}, alpha={alpha}", flush=True)
                 
                 w, bias, loss, accuracy = train_softmax_classifier(
                     x_train, y_train, x_val, y_val,
-                    learning_rate=lnr, batch_size=bts, nepochs=epchs
+                    learning_rate=lnr, batch_size=bts, nepochs=100, alpha=alpha
                 )
                 
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
                     best_lr = lnr
                     best_bs = bts
-                    best_epoch = epchs
+                    best_alpha = alpha
                     best_W = w
                     best_b = bias
                     print(f" -> new best acc={best_accuracy:.4f}", flush=True)
@@ -192,8 +195,16 @@ if __name__ == "__main__":
 
     # Retrain model on full training set with best hyperparameters and evaluate on test set
     # BEGIN YOUR CODE HERE (~1 line)
-    final_W, final_b, loss, acc = train_softmax_classifier(training_images, training_labels, testing_images, testing_labels,
-                                   learning_rate=best_lr, batch_size=best_bs, nepochs=best_epoch)
+    final_W, final_b, loss, acc = train_softmax_classifier(
+        training_images, training_labels, testing_images, testing_labels,
+        learning_rate=best_lr, batch_size=best_bs, nepochs=100, alpha=best_alpha)
+    
+    test_loss = cross_entropy_loss(final_W, final_b, testing_images, testing_labels, best_alpha)
+    test_accuracy = compute_accuracy(final_W, final_b, testing_images, testing_labels)
+
+    
     # END YOUR CODE HERE
 
     # showWeights(lr[:,:])
+    
+    
