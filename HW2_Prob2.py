@@ -97,7 +97,15 @@ def train_softmax_classifier(train_images, train_labels, val_images, val_labels,
     b = np.zeros(n_classes)
     # END YOUR CODE HERE
 
-    cost, acc = float('inf'), 0.0
+    cost = float('inf')
+    acc = 0.0
+    best_val_loss = float('inf')
+    patience = 10
+    patience_counter = 0
+    best_W_es = 0
+    best_b_es = 0
+    best_epoch = 0 
+
     for epoch in range(nepochs):
         np.random.seed(epoch)
         perm = np.random.permutation(train_images.shape[0])
@@ -126,7 +134,20 @@ def train_softmax_classifier(train_images, train_labels, val_images, val_labels,
         cost = cross_entropy_loss(W, b, val_images, val_labels, alpha)
         acc  = compute_accuracy(W, b, val_images, val_labels)
         # END YOUR CODE HERE
-    return W, b, cost, acc
+        if cost < best_val_loss:
+            best_val_loss = cost
+            best_W_es = W.copy()
+            best_b_es = b.copy()
+            best_epoch = epoch + 1
+            patience_counter = 0
+        else:
+            patience_counter += 1
+            if patience_counter >= patience:
+                break
+
+    if best_W_es is not None:
+        return best_W_es, best_b_es, best_val_loss, compute_accuracy(best_W_es, best_b_es, val_images, val_labels), best_epoch
+    return W, b, cost, acc, epoch + 1
 
 # def add_bias(images):
 #     return np.hstack((images, np.ones((images.shape[0], 1))))
@@ -175,9 +196,9 @@ if __name__ == "__main__":
                 run_idx += 1
                 print(f"Starting combo {run_idx}/{total}: lr={lnr}, batch_size={bts}, alpha={alpha}", flush=True)
                 
-                w, bias, loss, accuracy = train_softmax_classifier(
+                w, bias, loss, accuracy, epochs_used = train_softmax_classifier(
                     x_train, y_train, x_val, y_val,
-                    learning_rate=lnr, batch_size=bts, nepochs=100, alpha=alpha
+                    learning_rate=lnr, batch_size=bts, nepochs=300, alpha=alpha
                 )
                 
                 if accuracy > best_accuracy:
@@ -185,6 +206,7 @@ if __name__ == "__main__":
                     best_lr = lnr
                     best_bs = bts
                     best_alpha = alpha
+                    best_epochs_used = epochs_used
                     best_W = w
                     best_b = bias
                     print(f" -> new best acc={best_accuracy:.4f}", flush=True)
@@ -195,32 +217,32 @@ print("Tested all unique hyperparameter combinations.")
 
 # Retrain model on full training set with best hyperparameters and evaluate on test set
 # BEGIN YOUR CODE HERE (~1 line)
-final_W, final_b, loss, acc = train_softmax_classifier(
+final_W, final_b, loss, acc, final_epochs = train_softmax_classifier(
     training_images, training_labels, testing_images, testing_labels,
-    learning_rate=best_lr, batch_size=best_bs, nepochs=100, alpha=best_alpha)
+    learning_rate=best_lr, batch_size=best_bs, nepochs=300, alpha=best_alpha)
 
 test_loss = cross_entropy_loss(final_W, final_b, testing_images, testing_labels, best_alpha)
 test_accuracy = compute_accuracy(final_W, final_b, testing_images, testing_labels)
 
 np.savez('hw2_p2_results.npz', 
-                        final_W=final_W, final_b=final_b, best_W=best_W, best_b=best_b,
-                        best_lr=best_lr, best_bs=best_bs, best_alpha=best_alpha,
-                        test_loss=test_loss, test_accuracy=test_accuracy,
-                        val_accuracy=best_accuracy)
+        final_W=final_W, final_b=final_b, best_W=best_W, best_b=best_b,
+        best_lr=best_lr, best_bs=best_bs, best_alpha=best_alpha,
+        test_loss=test_loss, test_accuracy=test_accuracy,
+        val_accuracy=best_accuracy, best_epochs_used=best_epochs_used)
     
 loaded = np.load('hw2_p2_results.npz')  
 
 
 print("Best Hyperparameters Found:")
-print(" Learning Rate: {best_lr}")
-print(" Batch Size: {best_bs}")
-print(" Regularization (alpha): {best_alpha}")
+print(f" Learning Rate: {best_lr}")
+print(f" Batch Size: {best_bs}")
+print(f" Regularization (alpha): {best_alpha}")
+print(f" Best Epoch: {best_epochs_used}")
 
 print("Test Set Performance:")
-print(" Cross-Entropy Loss (unregularized): {test_loss:.4f}")
-print(" Accuracy: {test_accuracy:.4f} ({test_accuracy*100:.2f}%)")
+print(f" Cross-Entropy Loss (unregularized): {test_loss:.4f}")
+print(f" Accuracy: {test_accuracy:.4f} ({test_accuracy*100:.2f}%)")
 
 # END YOUR CODE HERE
 
 # showWeights(lr[:,:])
-
