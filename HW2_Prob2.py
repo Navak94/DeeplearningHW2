@@ -235,7 +235,7 @@ test_loss = cross_entropy_loss(final_W, final_b, testing_images, testing_labels,
 test_accuracy = compute_accuracy(final_W, final_b, testing_images, testing_labels)
 
 np.savez('hw2_p2_results.npz', 
-        final_W=final_W, final_b=final_b, W_best=W_best, best_b=best_bs,
+        final_W=final_W, final_b=final_b, W_best=W_best, b_best=b_best,
         best_learning_rate=best_learning_rate, best_bs=best_bs, best_alpha=best_alpha,
         test_loss=test_loss, test_accuracy=test_accuracy,
         val_accuracy=best_accuracy, best_epochs_used=best_epochs_used)
